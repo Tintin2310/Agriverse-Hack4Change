@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriVerse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to AgriVerse</h1>
+        <form id="farmForm" action="/add_farm" method="post">
+            <input type="text" name="farm_name" placeholder="Farm Name" required>
+            <input type="text" name="crop_name" placeholder="Crop Name" required>
+            <input type="number" name="quantity" placeholder="Quantity (kg)" required>
+            <input type="number" step="0.01" name="rate" placeholder="Rate per kg" required>
+            <input type="hidden" name="latitude" id="latitude" required>
+            <input type="hidden" name="longitude" id="longitude" required>
+            <button type="submit">Add Farm</button>
+        </form>
+        <div id="loading">Loading...</div>
+        <div id="success-message">Farm successfully registered!</div>
+        <h2>Farms</h2>
+        <a href="{{ url_for('buyers') }}">View Registered Farms (Buyers)</a>
+    </div>
+    <script>
+        document.getElementById('farmForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            var loading = document.getElementById('loading');
+            var successMessage = document.getElementById('success-message');
+            loading.style.display = 'block';
+            successMessage.style.display = 'none';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+
+                    var form = event.target;
+                    var formData = new FormData(form);
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => {
+                        loading.style.display = 'none';
+                        successMessage.style.display = 'block';
+                        form.reset();
+                    }).catch(error => {
+                        loading.style.display = 'none';
+                        alert('Error registering farm: ' + error.message);
+                    });
+                }, function (error) {
+                    loading.style.display = 'none';
+                    alert('Error getting location: ' + error.message);
+                });
+            } else {
+                loading.style.display = 'none';
+                alert("Geolocation is not supported by this browser.");
+            }
+        });
+    </script>
+</body>
+</html>

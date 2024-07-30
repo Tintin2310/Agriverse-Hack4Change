@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buyers Dashboard - AgriVerse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Buyers Dashboard</h1>
+        <a href="{{ url_for('logout') }}">Logout</a>
+        <div id="mapContainer" style="width: 100%; height: 500px;"></div>
+        <ul id="farmList"></ul>
+    </div>
+    <script>
+        function addMarkersToMap(map, farms) {
+            farms.forEach(farm => {
+                let marker = new H.map.Marker({ lat: farm.latitude, lng: farm.longitude });
+                map.addObject(marker);
+            });
+        }
+
+        var platform = new H.service.Platform({
+            apikey: '6VLeE2DpGJ0nUui5QL07'
+        });
+        var defaultLayers = platform.createDefaultLayers();
+
+        var map = new H.Map(document.getElementById('mapContainer'),
+            defaultLayers.vector.normal.map, {
+            center: { lat: 0, lng: 0 },
+            zoom: 2,
+            pixelRatio: window.devicePixelRatio || 1
+        });
+
+        window.addEventListener('resize', () => map.getViewPort().resize());
+
+        var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+
+        var ui = H.ui.UI.createDefault(map, defaultLayers);
+
+        fetch('/api/farms')
+            .then(response => response.json())
+            .then(data => {
+                addMarkersToMap(map, data);
+                const farmList = document.getElementById('farmList');
+                data.forEach(farm => {
+                    const li = document.createElement('li');
+                    li.textContent = `Farm: ${farm.farm_name}, Crop: ${farm.crop_name}, Quantity: ${farm.quantity}kg, Rate: Rs${farm.rate}/kg`;
+                    farmList.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Error fetching farms:', error));
+    </script>
+</body>
+</html>
